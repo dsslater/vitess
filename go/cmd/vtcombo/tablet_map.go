@@ -518,15 +518,27 @@ func (itmc *internalTabletManagerClient) GetPermissions(ctx context.Context, tab
 }
 
 func (itmc *internalTabletManagerClient) SetReadOnly(ctx context.Context, tablet *topodatapb.Tablet) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.SetReadOnly(ctx, true)
 }
 
 func (itmc *internalTabletManagerClient) SetReadWrite(ctx context.Context, tablet *topodatapb.Tablet) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.SetReadOnly(ctx, false)
 }
 
 func (itmc *internalTabletManagerClient) ChangeType(ctx context.Context, tablet *topodatapb.Tablet, dbType topodatapb.TabletType) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.ChangeType(ctx, dbType)
 }
 
 func (itmc *internalTabletManagerClient) Sleep(ctx context.Context, tablet *topodatapb.Tablet, duration time.Duration) error {
@@ -539,7 +551,16 @@ func (itmc *internalTabletManagerClient) Sleep(ctx context.Context, tablet *topo
 }
 
 func (itmc *internalTabletManagerClient) ExecuteHook(ctx context.Context, tablet *topodatapb.Tablet, hk *hook.Hook) (*hook.HookResult, error) {
-	return nil, fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return nil, fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	hr := t.agent.ExecuteHook(ctx, hk)
+	return &hook.HookResult{
+		ExitStatus: int(hr.ExitStatus),
+		Stdout:     hr.Stdout,
+		Stderr:     hr.Stderr,
+	}, nil
 }
 
 func (itmc *internalTabletManagerClient) RefreshState(ctx context.Context, tablet *topodatapb.Tablet) error {
@@ -593,107 +614,213 @@ func (itmc *internalTabletManagerClient) ApplySchema(ctx context.Context, tablet
 }
 
 func (itmc *internalTabletManagerClient) ExecuteFetchAsDba(ctx context.Context, tablet *topodatapb.Tablet, usePool bool, query []byte, maxRows int, disableBinlogs, reloadSchema bool) (*querypb.QueryResult, error) {
-	return nil, fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return nil, fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.ExecuteFetchAsDba(ctx, query, topoproto.TabletDbName(tablet), maxRows, disableBinlogs, reloadSchema)
 }
 
 func (itmc *internalTabletManagerClient) ExecuteFetchAsApp(ctx context.Context, tablet *topodatapb.Tablet, usePool bool, query []byte, maxRows int) (*querypb.QueryResult, error) {
-	return nil, fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return nil, fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.ExecuteFetchAsApp(ctx, query, maxRows)
 }
 
 func (itmc *internalTabletManagerClient) SlaveStatus(ctx context.Context, tablet *topodatapb.Tablet) (*replicationdatapb.Status, error) {
-	return nil, fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return nil, fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.SlaveStatus(ctx)
 }
 
 func (itmc *internalTabletManagerClient) MasterPosition(ctx context.Context, tablet *topodatapb.Tablet) (string, error) {
-	return "", fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return "", fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.MasterPosition(ctx)
 }
 
 func (itmc *internalTabletManagerClient) StopSlave(ctx context.Context, tablet *topodatapb.Tablet) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.StopSlave(ctx)
 }
 
 func (itmc *internalTabletManagerClient) StopSlaveMinimum(ctx context.Context, tablet *topodatapb.Tablet, stopPos string, waitTime time.Duration) (string, error) {
-	return "", fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return "", fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.StopSlaveMinimum(ctx, stopPos, waitTime)
 }
 
 func (itmc *internalTabletManagerClient) StartSlave(ctx context.Context, tablet *topodatapb.Tablet) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.StartSlave(ctx)
 }
 
 func (itmc *internalTabletManagerClient) TabletExternallyReparented(ctx context.Context, tablet *topodatapb.Tablet, externalID string) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.TabletExternallyReparented(ctx, externalID)
 }
 
 func (itmc *internalTabletManagerClient) GetSlaves(ctx context.Context, tablet *topodatapb.Tablet) ([]string, error) {
-	return nil, fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return nil, fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.GetSlaves(ctx)
 }
 
 func (itmc *internalTabletManagerClient) WaitBlpPosition(ctx context.Context, tablet *topodatapb.Tablet, blpPosition *tabletmanagerdatapb.BlpPosition, waitTime time.Duration) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.WaitBlpPosition(ctx, blpPosition, waitTime)
 }
 
 func (itmc *internalTabletManagerClient) StopBlp(ctx context.Context, tablet *topodatapb.Tablet) ([]*tabletmanagerdatapb.BlpPosition, error) {
-	return nil, fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return nil, fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.StopBlp(ctx)
 }
 
 func (itmc *internalTabletManagerClient) StartBlp(ctx context.Context, tablet *topodatapb.Tablet) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.StartBlp(ctx)
 }
 
 func (itmc *internalTabletManagerClient) RunBlpUntil(ctx context.Context, tablet *topodatapb.Tablet, positions []*tabletmanagerdatapb.BlpPosition, waitTime time.Duration) (string, error) {
-	return "", fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return "", fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.RunBlpUntil(ctx, positions, waitTime)
 }
 
 func (itmc *internalTabletManagerClient) ResetReplication(ctx context.Context, tablet *topodatapb.Tablet) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.ResetReplication(ctx)
 }
 
 func (itmc *internalTabletManagerClient) InitMaster(ctx context.Context, tablet *topodatapb.Tablet) (string, error) {
-	return "", fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return "", fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.InitMaster(ctx)
 }
 
 func (itmc *internalTabletManagerClient) PopulateReparentJournal(ctx context.Context, tablet *topodatapb.Tablet, timeCreatedNS int64, actionName string, masterAlias *topodatapb.TabletAlias, pos string) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.PopulateReparentJournal(ctx, timeCreatedNS, actionName, masterAlias, pos)
 }
 
 func (itmc *internalTabletManagerClient) InitSlave(ctx context.Context, tablet *topodatapb.Tablet, parent *topodatapb.TabletAlias, replicationPosition string, timeCreatedNS int64) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.InitSlave(ctx, parent, replicationPosition, timeCreatedNS)
 }
 
 func (itmc *internalTabletManagerClient) DemoteMaster(ctx context.Context, tablet *topodatapb.Tablet) (string, error) {
-	return "", fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return "", fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.DemoteMaster(ctx)
 }
 
 func (itmc *internalTabletManagerClient) PromoteSlaveWhenCaughtUp(ctx context.Context, tablet *topodatapb.Tablet, pos string) (string, error) {
-	return "", fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return "", fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.PromoteSlaveWhenCaughtUp(ctx, pos)
 }
 
 func (itmc *internalTabletManagerClient) SlaveWasPromoted(ctx context.Context, tablet *topodatapb.Tablet) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.SlaveWasPromoted(ctx)
 }
 
 func (itmc *internalTabletManagerClient) SetMaster(ctx context.Context, tablet *topodatapb.Tablet, parent *topodatapb.TabletAlias, timeCreatedNS int64, forceStartSlave bool) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.SetMaster(ctx, parent, timeCreatedNS, forceStartSlave)
 }
 
 func (itmc *internalTabletManagerClient) SlaveWasRestarted(ctx context.Context, tablet *topodatapb.Tablet, parent *topodatapb.TabletAlias) error {
-	return fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.SlaveWasRestarted(ctx, parent)
 }
 
 func (itmc *internalTabletManagerClient) StopReplicationAndGetStatus(ctx context.Context, tablet *topodatapb.Tablet) (*replicationdatapb.Status, error) {
-	return nil, fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return nil, fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.StopReplicationAndGetStatus(ctx)
 }
 
 func (itmc *internalTabletManagerClient) PromoteSlave(ctx context.Context, tablet *topodatapb.Tablet) (string, error) {
-	return "", fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return "", fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	return t.agent.PromoteSlave(ctx)
 }
 
 func (itmc *internalTabletManagerClient) Backup(ctx context.Context, tablet *topodatapb.Tablet, concurrency int) (logutil.EventStream, error) {
-	return nil, fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return nil, fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	t.agent.Backup(ctx, concurrency, nil)
+	return nil, nil
 }
 
 func (itmc *internalTabletManagerClient) RestoreFromBackup(ctx context.Context, tablet *topodatapb.Tablet) (logutil.EventStream, error) {
-	return nil, fmt.Errorf("not implemented in vtcombo")
+	t, ok := tabletMap[tablet.Alias.Uid]
+	if !ok {
+		return nil, fmt.Errorf("tmclient: cannot find tablet %v", tablet.Alias.Uid)
+	}
+	t.agent.RestoreFromBackup(ctx, nil)
+	return nil, nil
 }
 
 func (itmc *internalTabletManagerClient) Close() {

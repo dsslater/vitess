@@ -31,13 +31,13 @@
   </div>
   <div class="vt-padding vt-action-container">
     
-    <button md-button disableRipple="true" [disabled]="!dialogContent.canSubmit()" (click)="sendAction();">{{dialogSettings.actionWord}}</button>
-    <button md-button disableRipple="true" (click)="cancelDialog();">Cancel</button>
+    <button md-button disableRipple="true" id="vt-action" [disabled]="!dialogContent.canSubmit()" (click)="sendAction();">{{dialogSettings.actionWord}}</button>
+    <button md-button disableRipple="true" id="vt-cancel" (click)="cancelDialog();">Cancel</button>
   </div>
 </div>
 <div class="vt-padding" *ngIf="dialogSettings.dialogLog">
   <div *ngIf="!dialogSettings.pending">
-    <div>
+    <div class="vt-resp">
       {{dialogContent.interpolateMessage(dialogSettings.respText)}}
     </div>
     <h4 *ngIf="dialogSettings.logText">Log:</h4>
@@ -50,6 +50,6 @@
     <md-progress-bar mode="indeterminate"></md-progress-bar>
   </div>
   <div class="buttons">
-    <button md-button disableRipple="true" [disabled]="dialogSettings.pending" (click)="closeDialog()">Dismiss</button>
+    <button md-button disableRipple="true" id="vt-dismiss" [disabled]="dialogSettings.pending" (click)="closeDialog()">Dismiss</button>
   </div>
 </div>
